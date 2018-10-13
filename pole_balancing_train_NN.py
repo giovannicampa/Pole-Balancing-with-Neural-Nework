@@ -6,17 +6,21 @@ from sklearn.neural_network import MLPRegressor
 #from sklearn.neighbors import KNeighborsRegressor this algorithm has also been tried, and it gives a bit worse performance with the same data
 from sklearn.preprocessing import OneHotEncoder
 
-X = pd.read_csv("X").iloc[:,1:5] #loading the training data
-y = pd.read_csv("y").iloc[:,1:2]
+X = pd.read_csv("X").loc[:, ["Obs1","Obs2", "Obs3", "Obs4", "Tot_Rew"]] #loading the training data
+y = pd.read_csv("y_s").loc[:, ["Act"]]
+
+X_good = X[X.Tot_Rew > min_score]
+X_good_train = X_good.iloc[:,0:4]
 
 encoder = OneHotEncoder()
 y_encoded = encoder.fit_transform(y).toarray()
 y_encoded_df = pd.DataFrame(y_encoded) #encoding the "action" data to make it compatible with the game
 y_encoded_df.columns = ["ac1", "ac2"]
+y_train = y_encoded_df[X.Tot_Rew > min_score]
 
 reg = MLPRegressor(solver = "adam", activation = "relu", hidden_layer_sizes = 200) #hyperparameters have been choosen in a way to maximise the score 
 #reg = KNeighborsRegressor(n_neighbors = 10)
-reg.fit(X, y_encoded_df) #direct training with all the dataset
+reg.fit(X_good_train, y_train) #direct training with all the dataset
 env = gym.make("CartPole-v0")
 
 n_games = 10
