@@ -8,8 +8,11 @@ goal_steps = 50 #timesteps that I want to be able to balance: training instances
 trials_nr = 10000 #training instances: how many times the game is played randomly
 scores = []
 accepted_scores = [] #to know how well my training data performed
+discount_rate = 0.99 #will influence how the total future reward of an action in influenced
+one_step_reward = 1 #what you get to stay up for one timestep
 training_data = pd.DataFrame()
 env.reset()
+reward_sum = [] #list that contains the sum of the discounted future rewards for each action; Is renewed at each episode
 
 for i_episode in range(trials_nr): #iterate through all the episodes
     score = 0
@@ -36,19 +39,21 @@ for i_episode in range(trials_nr): #iterate through all the episodes
         if done:
             break
         
-    if score >= goal_steps: #here the good episodes are filtered out and used as training data
-        accepted_scores.append(score)
-        training_data = training_data.append(episode_memory)
+   for i_timestep in range(len(episode_memory)): #[0,1,2...11]
+        discounted_reward = 0
+        for x in reversed(range(len(episode_memory)-i_timestep)): #[11,10,..,episode_memory - i_timestep]
+            discounted_reward = discounted_reward + one_step_reward*discount_rate**x
+        reward_sum.append(discounted_reward)
+        
+    training_data = training_data.append(episode_memory)
     env.reset()
-    
-print(accepted_scores)
-print(sum(accepted_scores)/len(accepted_scores))
 
 training_data.columns = ["Obs1", "Obs2", "Obs3", "Obs4", "Act"]
 training_data.reset_index(inplace = True, drop = True)
+training_data_w_scores = pd.concat([training_data, reward_sum], axis = 1)
 
-X = training_data.iloc[:,0:4]
-y = training_data.iloc[:,4:5]
+X = training_data_w_scores.loc[:, ["Obs1","Obs2", "Obs3", "Obs4", "Tot_Rew"]]
+y = training_data_w_scores.loc[:,["Act"]]
 
 
 X.to_csv("X")
