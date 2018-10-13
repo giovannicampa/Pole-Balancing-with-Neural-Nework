@@ -7,7 +7,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import OneHotEncoder
 
 X = pd.read_csv("X").loc[:, ["Obs1","Obs2", "Obs3", "Obs4", "Tot_Rew"]] #loading the training data
-y = pd.read_csv("y_s").loc[:, ["Act"]]
+y = pd.read_csv("y").loc[:, ["Act"]]
 
 X_good = X[X.Tot_Rew > min_score]
 X_good_train = X_good.iloc[:,0:4]
